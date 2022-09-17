@@ -10,7 +10,16 @@ import SwiftUI
 struct ContentView: View {
     
     @State private var isAnimating: Bool = false
-    @State private var imageScale:CGFloat = 1
+    @State private var imageScale: CGFloat = 1
+    @State private var imageOffset: CGSize = .zero
+    
+    func resetImageState(){
+        return withAnimation(.spring()) {
+            imageScale = 1
+            imageOffset = .zero
+        }
+    }
+    
     
     var body: some View {
         NavigationView {
@@ -22,18 +31,32 @@ struct ContentView: View {
                     .padding()
                     .shadow(color: .black.opacity(0.2), radius: 12, x: 2, y: 2)
                     .opacity(isAnimating ? 0 : 1)
+                    .offset(x: imageOffset.width, y: imageOffset.height)
                     .scaleEffect(imageScale)
                     .onTapGesture(count: 2) { // here we are tapping 2 times.. indirectly it is double tap gesture
                         if imageScale == 1 {
                             withAnimation(.spring()){
-                                imageScale = 5 // this condition is triggered when image is at its original size and we want to zoom in
+                                imageScale = 5
                             }
                         } else{
-                            withAnimation(.spring()){
-                                imageScale = 1 // this condition is triggered when image is already scaled and we now want it to be in its original state
-                            }
+                                resetImageState()
                         }
                     }
+                    .gesture(
+                        // Drag gesture has 3 types of actions
+                        // Updating function, Unchanged function and on ended function
+                    DragGesture()
+                        .onChanged({ value in
+                            withAnimation(.linear(duration: 1)){
+                                imageOffset = value.translation
+                            }
+                        })
+                        .onEnded({ _ in
+                            if imageScale <= 1{
+                                resetImageState()
+                            }
+                        })
+                    )
                 
             }
             .navigationTitle("Pinch & Zoom")
